@@ -301,6 +301,7 @@ def get_isu_list():
     response_list = []
     for isu in isu_list:
         found_last_condition = True
+        #スロークエリ改善必要
         query = "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = %s ORDER BY `timestamp` DESC LIMIT 1"
         row = select_row(query, (isu.jia_isu_uuid,))
         if row is None:
@@ -358,6 +359,7 @@ def post_isu():
         cur = cnx.cursor(dictionary=True)
 
         try:
+            #スロークエリ改善必要
             query = """
                 INSERT
                 INTO `isu` (`jia_isu_uuid`, `name`, `image`, `jia_user_id`)
@@ -468,6 +470,7 @@ def generate_isu_graph_response(jia_isu_uuid: str, graph_date: datetime) -> list
     timestamps_in_this_hour = []
     start_time_in_this_hour = None
 
+    #スロークエリ改善必要
     query = "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = %s ORDER BY `timestamp` ASC"
     rows = select_all(query, (jia_isu_uuid,))
     for row in rows:
@@ -694,6 +697,7 @@ def get_trend():
         character_warning_isu_conditions = []
         character_critical_isu_conditions = []
         for isu in isu_list:
+            #スロークエリ改善必要
             query = "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = %s ORDER BY timestamp DESC"
             conditions = [IsuCondition(**row) for row in select_all(query, (isu.jia_isu_uuid,))]
 
