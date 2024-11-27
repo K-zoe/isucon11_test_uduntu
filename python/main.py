@@ -20,7 +20,7 @@ from werkzeug.exceptions import (
 import mysql.connector
 from sqlalchemy.pool import QueuePool
 import jwt
-
+import os
 
 TZ = ZoneInfo("Asia/Tokyo")
 CONDITION_LIMIT = 20
@@ -176,10 +176,12 @@ mysql_connection_env = {
     "time_zone": "+09:00",
 }
 
+#pool_sizeをいじると少しは変わるかも
 cnxpool = QueuePool(lambda: mysql.connector.connect(**mysql_connection_env), pool_size=10)
 
 
 def select_all(query, *args, dictionary=True):
+    #クエリの実行
     cnx = cnxpool.connect()
     try:
         cur = cnx.cursor(dictionary=dictionary)
@@ -203,6 +205,7 @@ if post_isu_condition_target_base_url is None:
 
 
 def get_user_id_from_session():
+    #sesion.getでログインしているユーザーのIDを取得する
     jia_user_id = session.get("jia_user_id")
 
     if jia_user_id is None:
@@ -301,7 +304,8 @@ def get_isu_list():
     response_list = []
     for isu in isu_list:
         found_last_condition = True
-        #スロークエリ改善必要
+        #スロークエリ改善必要　indexをはる。
+        #CREATE INDEX isu_condition_idx ON isu_condition(jia_isu_uuid); 
         query = "SELECT * FROM `isu_condition` WHERE `jia_isu_uuid` = %s ORDER BY `timestamp` DESC LIMIT 1"
         row = select_row(query, (isu.jia_isu_uuid,))
         if row is None:
@@ -739,6 +743,9 @@ def post_isu_condition(jia_isu_uuid):
         app.logger.warning("drop post isu condition request")
         return "", 202
     try:
+        path = f'{os.getcwd()}/log.txt'
+        with open(path) as f:
+            print(request.json)
         req = [PostIsuConditionRequest(**row) for row in request.json]
     except:
         raise BadRequest("bad request body")
