@@ -743,9 +743,9 @@ def post_isu_condition(jia_isu_uuid):
         app.logger.warning("drop post isu condition request")
         return "", 202
     try:
-        path = f'{os.getcwd()}/log.txt'
-        with open(path) as f:
-            print(request.json)
+        path = f'{os.getcwd()}\log.txt'
+        with open(path,mode = 'w') as f:
+            f.write(request.json)
         req = [PostIsuConditionRequest(**row) for row in request.json]
     except:
         raise BadRequest("bad request body")
