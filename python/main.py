@@ -743,9 +743,16 @@ def post_isu_condition(jia_isu_uuid):
         app.logger.warning("drop post isu condition request")
         return "", 202
     try:
-        path = f'{os.getcwd()}\log.txt'
-        with open(path,mode = 'w') as f:
-            f.write(request.json)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # ログファイルのパス
+        log_file_path = os.path.join(current_dir, 'log.txt')
+        # ログに書き込む処理
+        def write_log(message):
+            with open(log_file_path, 'a') as log_file:
+                log_file.write(f"{message}\n")
+        # ログの書き込み例
+        write_log(request.json)
+        
         req = [PostIsuConditionRequest(**row) for row in request.json]
     except:
         raise BadRequest("bad request body")
