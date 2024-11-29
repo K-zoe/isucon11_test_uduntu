@@ -177,7 +177,7 @@ mysql_connection_env = {
 }
 
 #pool_sizeをいじると少しは変わるかも
-cnxpool = QueuePool(lambda: mysql.connector.connect(**mysql_connection_env), pool_size=10)
+cnxpool = QueuePool(lambda: mysql.connector.connect(**mysql_connection_env), pool_size=20)
 
 
 def select_all(query, *args, dictionary=True):
@@ -743,16 +743,6 @@ def post_isu_condition(jia_isu_uuid):
         app.logger.warning("drop post isu condition request")
         return "", 202
     try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        # ログファイルのパス
-        log_file_path = os.path.join(current_dir, 'log.txt')
-        # ログに書き込む処理
-        def write_log(message):
-            with open(log_file_path, 'a') as log_file:
-                log_file.write(f"{message}\n")
-        # ログの書き込み例
-        write_log(request.json)
-        
         req = [PostIsuConditionRequest(**row) for row in request.json]
     except:
         raise BadRequest("bad request body")
@@ -761,32 +751,35 @@ def post_isu_condition(jia_isu_uuid):
     try:
         cnx.start_transaction()
         cur = cnx.cursor(dictionary=True)
-
+        
         query = "SELECT COUNT(*) AS cnt FROM `isu` WHERE `jia_isu_uuid` = %s"
         cur.execute(query, (jia_isu_uuid,))
         count = cur.fetchone()["cnt"]
         if count == 0:
             raise NotFound("not found: isu")
 
+        values = []
+
         for cond in req:
             if not is_valid_condition_format(cond.condition):
                 raise BadRequest("bad request body")
+            else:
+                values.append(
+                    (
+                        jia_isu_uuid,
+                        datetime.fromtimestamp(cond.timestamp, tz=TZ),
+                        cond.is_sitting,
+                        cond.condition,
+                        cond.message,
+                        )
+                    )
 
-            query = """
-                INSERT
-                INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)
-                VALUES (%s, %s, %s, %s, %s)
-                """
-            cur.execute(
-                query,
-                (
-                    jia_isu_uuid,
-                    datetime.fromtimestamp(cond.timestamp, tz=TZ),
-                    cond.is_sitting,
-                    cond.condition,
-                    cond.message,
-                ),
-            )
+        query = """
+            INSERT
+            INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+        cur.executemany(query,values)
 
         cnx.commit()
     except:
