@@ -780,7 +780,11 @@ def post_isu_condition(jia_isu_uuid):
             INTO `isu_condition` (`jia_isu_uuid`, `timestamp`, `is_sitting`, `condition`, `message`)
             VALUES (%s, %s, %s, %s, %s)
             """
-        cur.executemany(query,values)
+
+        list_half = len(values)//2
+
+        cur.executemany(query,values[:list_half])
+        cur.executemany(query,values[list_half:])
 
         cnx.commit()
     except:
