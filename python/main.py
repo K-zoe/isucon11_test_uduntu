@@ -615,7 +615,7 @@ def get_isu_confitions(jia_isu_uuid):
         except:
             raise BadRequest("bad format: start_time")
 
-    query = "SELECT name FROM `isu` WHERE `jia_isu_uuid` = %s AND `jia_user_id` = %s"
+    query = "SELECT name FROM `isu` WHERE `jia_isu_uuid` = %s AND `jia_user_id` = %s LIMIT 1"
     row = select_row(query, (jia_isu_uuid, jia_user_id))
     if row is None:
         raise NotFound("not found: isu")
