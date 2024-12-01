@@ -21,6 +21,7 @@ import mysql.connector
 from sqlalchemy.pool import QueuePool
 import jwt
 import os
+import pyuwsgi
 
 TZ = ZoneInfo("Asia/Tokyo")
 CONDITION_LIMIT = 20
@@ -851,4 +852,12 @@ def is_valid_condition_format(condition_str: str) -> bool:
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=getenv("SERVER_APP_PORT", 3000), threaded=True)
+    #app.run(host="0.0.0.0", port=getenv("SERVER_APP_PORT", 3000), threaded=True)
+    port = getenv("SERVER_APP_PORT", 3000)
+    pyuwsgi.run([
+        "--http", f"0.0.0.0:{port}",  # ホストとポートを指定
+        "--wsgi-file", __file__,      # 現在のファイルを WSGI ファイルとして指定
+        "--callable", "app",          # WSGI アプリケーションオブジェクト名
+        "--threads", "1",             # スレッド数（元々 `threaded=True` が指定されていた場合に合わせる）
+        "--master",                   # マスタープロセスを有効化
+    ])
